@@ -1,15 +1,17 @@
 # cython: language_level=3, cdivision=True
 
+
 import cython
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cpython.ref cimport PyObject, Py_XINCREF, Py_XDECREF
 
-# This is the struct in which the objects get stored
+# This is the struct in which the objects inserted into the tree get stored
 cdef struct container:
     PyObject* item
     double *pos
 
-# This the the struct representing an individual tree.
+# This the the struct representing an individual nodes of the tree.
+# The nodes are named tree and subnodes subtree because of bad naming. Might eventually fix it.
 # The subtree pointer gets initialized to none until a tree needs to split.
 cdef struct tree:
     tree *subtree
@@ -18,9 +20,10 @@ cdef struct tree:
     double *pos2
     int number_of_elements
 
-# This function is a fast method to compute if a given point is within a bounding rectangular
-# hypervolume given by two other points.
+
 cdef bint is_within(int num_dims, double* position_1, double* position_2, double* position):
+    # This function is a fast method to compute if a given point is within a bounding rectangular
+    # hypervolume given by two other points.
     cdef int i
     cdef double a, b, p
 
@@ -37,8 +40,8 @@ cdef bint is_within(int num_dims, double* position_1, double* position_2, double
             return False
     return True
 
-# Function which recursively frees up the memory used by a tree.
 cdef void clean_up(tree* parent_ptr, int children):
+    # Function which recursively frees up the memory used by a tree.
     cdef int i
 
     # First we free up pos2, our parent caller cleans pos1.
@@ -61,9 +64,10 @@ cdef void clean_up(tree* parent_ptr, int children):
         PyMem_Free(parent_ptr[0].subtree[0].pos1)
         PyMem_Free(parent_ptr[0].subtree)
 
-# Subdivision function
-# May raise memory errors, but it will prevent leaks by clever handling.
+
 cdef bint subdivide(int num_dims, int bucket_size, tree* parent_ptr):
+    # Subdivision function
+    # May raise memory errors, but it will prevent leaks by clever handling.
     cdef int i, j
     cdef int number_of_children = 1 << num_dims
     cdef container *bucket
@@ -149,8 +153,9 @@ cdef bint subdivide(int num_dims, int bucket_size, tree* parent_ptr):
     parent_ptr[0].subtree = subtree
     return True
 
-# Insert into Tree function
+
 cdef bint insert_object(tree* parent_ptr, int bucket_size, int num_dims, double* pos, PyObject* item):
+    # Insert function calls this function. This does the work of actually inserting the item.
     cdef int i
     cdef int number_of_children = 1 << num_dims
 
@@ -176,8 +181,9 @@ cdef bint insert_object(tree* parent_ptr, int bucket_size, int num_dims, double*
     # We shouldn't ever arrive here, the point must be inside one of the children.
     raise AttributeError('could not insert item into tree')
 
-# Complete acceptance function, skips all of the faff, this is the secret sauce to the speed.
+
 cdef void complete_grab(list query_results, tree* parent_ptr, int number_of_children):
+    # Complete acceptance function, skips all of the faff, this is the secret sauce to the speed.
     cdef int i
 
     # Grab every item in tree
@@ -189,9 +195,10 @@ cdef void complete_grab(list query_results, tree* parent_ptr, int number_of_chil
         for i in range(number_of_children):
             complete_grab(query_results, &(parent_ptr[0].subtree[i]), number_of_children)
 
-# Query Function, finds all points inside bounding box, number of children needs to be passed to avoid
-# Recomputing it each time, probably a premature optimization but whatever.
+
 cdef void query(list query_results, int num_dims, int number_of_children, tree* parent_ptr, double* pos1, double* pos2):
+    # Query Function, finds all points inside bounding box, number of children needs to be passed to avoid
+    # Recomputing it each time, probably a premature optimization but whatever.
     cdef bint a, b
     cdef int i
 
@@ -231,29 +238,35 @@ cdef void query(list query_results, int num_dims, int number_of_children, tree* 
     return
 
 
-# This class is just a holder which makes __iter__ work.
+# This class is just a holder which makes __iter__ work. Hidden by the decorator.
 @cython.internal
 cdef class TreePointer:
     cdef tree* ptr
 
 
-# This is the main class.
 cdef class Orthtree:
+    """
+    N-Dimensional Orthtree
+    """
     cdef tree root
     cdef readonly int number_of_objects, number_of_dims, bucket_size
+    cdef readonly tuple position_1, position_2
 
     def __init__(self, position_1, position_2, bucket_size = 8):
-        cdef tuple list_position_1 = tuple(position_1)
-        cdef tuple list_position_2 = tuple(position_2)
+        cdef tuple tuple_position_1 = tuple(position_1)
+        cdef tuple tuple_position_2 = tuple(position_2)
         cdef int i
+
         cdef double* pos1
         cdef double* pos2
         cdef container* bucket
 
-        self.number_of_dims = len(list_position_1)
+        self.number_of_dims = len(tuple_position_1)
         self.number_of_objects = 0
+        self.position_1 = tuple_position_1
+        self.position_2 = tuple_position_2
 
-        if len(list_position_1) != len(list_position_2):
+        if len(tuple_position_1) != len(tuple_position_2):
             raise SyntaxError('dimensions of arguments are mismatched!')
 
         self.bucket_size = int(bucket_size)
@@ -286,8 +299,8 @@ cdef class Orthtree:
         self.root.number_of_elements = 0
 
         for i in range(self.number_of_dims):
-            self.root.pos1[i] = float(list_position_1[i])
-            self.root.pos2[i] = float(list_position_2[i])
+            self.root.pos1[i] = float(tuple_position_1[i])
+            self.root.pos2[i] = float(tuple_position_2[i])
 
     def __dealloc__(self):
         cdef int number_of_children = 1 << self.number_of_dims
@@ -296,12 +309,13 @@ cdef class Orthtree:
         PyMem_Free(self.root.pos1)
 
     def insert(self, item, position):
+        # Insert an item with a given position into the tree
         cdef PyObject* item_ptr = <PyObject*>item
-        cdef tuple position_list = tuple(position)
+        cdef tuple tuple_position = tuple(position)
         cdef double* pos
         cdef int i
 
-        if len(position_list) != self.number_of_dims:
+        if len(tuple_position) != self.number_of_dims:
             raise IndexError('invalid position')
 
         pos = <double*>PyMem_Malloc(sizeof(double) * self.number_of_dims)
@@ -325,7 +339,7 @@ cdef class Orthtree:
             raise Exception
 
     def to_list(self):
-        # Very simple method, just complete_grabs the root tree.
+        # Very simple method, returns all elements in the tree.
         # much faster than calling list() with the tree as an object.
         cdef list query_results = []
         cdef int number_of_children = 1 << self.number_of_dims
@@ -334,7 +348,6 @@ cdef class Orthtree:
 
     def __iter__(self):
         # Fancy generator of sorts.
-        # Testing cpdefs
         cdef int number_of_children = 1 << self.number_of_dims
 
         def recursive_yielding_generator(TreePointer pointer):

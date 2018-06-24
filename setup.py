@@ -1,11 +1,29 @@
 from setuptools import setup
-from Cython.Build import cythonize
+
+use_cython = False
+
+with open('README.md', 'r') as readme:
+    long_description = readme.read()
+
+if use_cython:
+    from Cython.Build import cythonize
+    extensions = None
+else:
+    extensions = None
+
 
 setup(
     name="orthtree",
-    version="0.0.1",
-    url="none",
-    author="me",
-    author_email="",
-    ext_modules=cythonize("orthtree.pyx"),
+    version="1.0.0",
+    url="https://github.com/AssortedFantasy/orthtrees",
+    author="Assorted Fantasy",
+    author_email="jehanzeb.mirza@yahoo.com",
+    description="Fast orthtree container type",
+    long_description=long_description,
+    ext_modules=extensions,
+    classifiers=(
+        "Programming Language :: Cython"
+        "License :: OSI Approved :: MIT License"
+        "Operating System :: OS Independent",
+    )
 )
