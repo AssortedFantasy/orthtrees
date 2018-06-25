@@ -1,0 +1,6 @@
+# Include Cython source
+include orthtree/*.pyx
+include orthtree/*.html
+
+# Why is this not automatic?
+include LICENSE.txt

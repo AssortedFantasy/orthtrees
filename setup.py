@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, Extension, find_packages
 
 use_cython = False
 
@@ -7,9 +7,9 @@ with open('README.md', 'r') as readme:
 
 if use_cython:
     from Cython.Build import cythonize
-    extensions = None
+    extensions = cythonize("orthtree/orthtree.pyx")
 else:
-    extensions = None
+    extensions = [Extension("orthtree", sources=["orthtree/orthtree.c"])]
 
 
 setup(
@@ -20,10 +20,14 @@ setup(
     author_email="jehanzeb.mirza@yahoo.com",
     description="Fast orthtree container type",
     long_description=long_description,
+    long_description_content_type="text/markdown",
+    packages=find_packages(),
     ext_modules=extensions,
     classifiers=(
-        "Programming Language :: Cython"
-        "License :: OSI Approved :: MIT License"
+        # No idea what else to add here, seems good?
+        "Programming Language :: Python",
+        "Programming Language :: Cython",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    )
+    ),
 )
