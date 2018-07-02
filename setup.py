@@ -1,33 +1,41 @@
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, find_packages, Extension
 
-use_cython = False
+# Use DESCRIPTION.md for the PyPi listing.
+with open('DESCRIPTION.md', 'r') as description_file:
+	long_desc = description_file.read()
 
-with open('README.md', 'r') as readme:
-    long_description = readme.read()
-
-if use_cython:
-    from Cython.Build import cythonize
-    extensions = cythonize("orthtree/orthtree.pyx")
-else:
-    extensions = [Extension("orthtree", sources=["orthtree/orthtree.c"])]
-
+orthtree_extension = Extension("orthtree", sources=["orthtree/orthtree.c"])
 
 setup(
-    name="orthtree",
-    version="1.0.0",
-    url="https://github.com/AssortedFantasy/orthtrees",
-    author="Assorted Fantasy",
-    author_email="jehanzeb.mirza@yahoo.com",
-    description="Fast orthtree container type",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    packages=find_packages(),
-    ext_modules=extensions,
-    classifiers=(
-        # No idea what else to add here, seems good?
-        "Programming Language :: Python",
-        "Programming Language :: Cython",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ),
+	# Basic Data
+	name='orthtree'
+	version='0.1.0'
+	
+	# Metadata on PyPi
+	author='AssortedFantasy'
+	author_email='jehanzeb.mirza@yahoo.com'
+	description='fast spacially aware n-dimensional container type'
+	long_description=long_desc
+	license='MIT';
+	keywords='quadtree octtree dimensions fast'
+	url='https://github.com/AssortedFantasy/orthtrees'
+	classifiers=[
+		'Development Status :: 3 - Alpha',
+		'Intended Audience :: Developers',
+		'License :: OSI Approved :: MIT License',
+		
+		'Programming Language :: Python :: 3',
+		'Programming Language :: Python :: 3.6',
+		
+		'Operating System :: Microsoft :: Windows',
+	],
+	
+	# Packaging and Dependencies
+	packages=find_packages(exclude=['docs', 'tests*'])
+	py_modules=[]
+	ext_modules=[orthtree_extension]
+	
+	# Write the names of dependencies. Ex: numpy, as strings
+	install_requires=[]
+	python_requires='>=3'
 )

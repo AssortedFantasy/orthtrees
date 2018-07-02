@@ -1,1 +1,3 @@
-name = "orthtree"
+__all__ = ['Orthtree']
+
+from orthtree import Orthtree

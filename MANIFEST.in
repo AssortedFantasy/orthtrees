@@ -1,6 +1,13 @@
-# Include Cython source
-include orthtree/*.pyx
-include orthtree/*.html
+# This is what gets included in source distributions
+# If something needs to be in a binary distribution, then use
+# Package data instead!
 
-# Why is this not automatic?
-include LICENSE.txt
+include *.txt
+include *.md
+include *.rst
+
+# Cython Source gets included
+
+include orthtree/*.html
+include orthtree/*.pyx
+include orthtree/*.c
