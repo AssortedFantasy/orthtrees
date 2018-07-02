@@ -18,7 +18,6 @@ entirely in Cython which implements an orthtree.
 
 ## Usage
 
-### Documentation
 
 **Class** orthtree.Orthtree( position_1, position_2, bucket_size=8)
 
@@ -31,7 +30,7 @@ can hold, you can Read the [Wikipedia Article](https://en.wikipedia.org/wiki/Qua
 on quadtrees to learn more about buckets. Buck size must be a positive integer.
 
 
-#### Orthtree objects
+### Orthtree objects
 
 Orthtree.**number_of_objects**
 int, is the the number of items in the tree.
